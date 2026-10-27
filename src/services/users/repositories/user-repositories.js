@@ -7,28 +7,19 @@ class UserRepositories {
     this.pool = new Pool();
   }
 
-  async createUser({ username, email, password, fullname }) {
+  async createUser({ name, email, password, role }) {
     const id = nanoid(16);
     const hashedPassword = await bcrypt.hash(password, 10);
     const createdAt = new Date().toISOString();
     const updatedAt = createdAt;
 
     const query = {
-      text: 'INSERT INTO users(id, username, email, password, fullname, created_at, updated_at) VALUES($1, $2, $3, $4, $5, $6, $7) RETURNING id',
-      values: [id, username, email, hashedPassword, fullname, createdAt, updatedAt],
+      text: 'INSERT INTO users(id, name, email, password, role, created_at, updated_at) VALUES($1, $2, $3, $4, $5, $6, $7) RETURNING id',
+      values: [id, name, email, hashedPassword, role, createdAt, updatedAt],
     };
 
     const result = await this.pool.query(query);
     return result.rows[0];
-  }
-
-  async verifyNewUsername(username) {
-    const query = {
-      text: 'SELECT username FROM users WHERE username = $1',
-      values: [username],
-    };
-    const result = await this.pool.query(query);
-    return result.rows.length > 0;
   }
 
   async verifyNewEmail(email) {
@@ -42,17 +33,17 @@ class UserRepositories {
 
   async getUserById(id) {
     const query = {
-      text: 'SELECT id, username, email, fullname, created_at, updated_at FROM users WHERE id = $1',
+      text: 'SELECT id, name, email, role, created_at, updated_at FROM users WHERE id = $1',
       values: [id],
     };
     const result = await this.pool.query(query);
     return result.rows[0];
   }
 
-  async verifyUserCredential(username, password) {
+  async verifyUserCredential(email, password) {
     const query = {
-      text: 'SELECT id, password FROM users WHERE username = $1',
-      values: [username],
+      text: 'SELECT id, password FROM users WHERE email = $1',
+      values: [email],
     };
 
     const user = await this.pool.query(query);

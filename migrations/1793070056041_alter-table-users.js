@@ -1,0 +1,28 @@
+/**
+ * @type {import('node-pg-migrate').ColumnDefinitions | undefined}
+ */
+export const shorthands = undefined;
+
+/**
+ * @param pgm {import('node-pg-migrate').MigrationBuilder}
+ * @param run {() => void | undefined}
+ * @returns {Promise<void> | void}
+ */
+export const up = (pgm) => {
+  pgm.renameColumn('users', 'fullname', 'name');
+  pgm.dropColumn('users', 'username');
+  pgm.addColumn('users', {
+    role: { type: 'VARCHAR(20)', notNull: true, default: 'user' },
+  });
+};
+
+/**
+ * @param pgm {import('node-pg-migrate').MigrationBuilder}
+ * @param run {() => void | undefined}
+ * @returns {Promise<void> | void}
+ */
+export const down = (pgm) => {
+  pgm.dropColumn('users', 'role');
+  pgm.addColumn('users', { username: { type: 'VARCHAR(50)' } });
+  pgm.renameColumn('users', 'name', 'fullname');
+};

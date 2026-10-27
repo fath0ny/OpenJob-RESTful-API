@@ -4,25 +4,20 @@ import InvariantError from '../../../exceptions/invariant-error.js';
 import NotFoundError from '../../../exceptions/not-found-error.js';
 
 export const createUser = async (req, res, next) => {
-  const { username, email, password, fullname } = req.validated;
-
-  const isUsernameExist = await UserRepositories.verifyNewUsername(username);
-  if (isUsernameExist) {
-    return next(new InvariantError('Gagal menambahkan user. Username sudah digunakan.'));
-  }
+  const { name, email, password, role } = req.validated;
 
   const isEmailExist = await UserRepositories.verifyNewEmail(email);
   if (isEmailExist) {
     return next(new InvariantError('Gagal menambahkan user. Email sudah digunakan.'));
   }
 
-  const user = await UserRepositories.createUser({ username, email, password, fullname });
+  const user = await UserRepositories.createUser({ name, email, password, role });
 
   if (!user) {
     return next(new InvariantError('User gagal ditambahkan'));
   }
 
-  return response(res, 201, 'User berhasil ditambahkan', { userId: user.id });
+  return response(res, 201, 'User berhasil ditambahkan', { id: user.id });
 };
 
 export const getUserById = async (req, res, next) => {
@@ -33,5 +28,5 @@ export const getUserById = async (req, res, next) => {
     return next(new NotFoundError('User tidak ditemukan'));
   }
 
-  return response(res, 200, 'User berhasil ditampilkan', { user });
+  return response(res, 200, 'User berhasil ditampilkan', user);
 };
