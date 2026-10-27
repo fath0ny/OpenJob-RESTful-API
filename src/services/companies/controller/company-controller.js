@@ -12,7 +12,7 @@ export const createCompany = async (req, res, next) => {
     return next(new InvariantError('Company gagal ditambahkan'));
   }
 
-  return response(res, 201, 'Company berhasil ditambahkan', { companyId: company.id });
+  return response(res, 201, 'Company berhasil ditambahkan', { id: company.id });
 };
 
 export const getCompanies = async (req, res) => {
@@ -28,7 +28,7 @@ export const getCompanyById = async (req, res, next) => {
     return next(new NotFoundError('Company tidak ditemukan'));
   }
 
-  return response(res, 200, 'Company berhasil ditampilkan', { company });
+  return response(res, 200, 'Company berhasil ditampilkan', company);
 };
 
 export const editCompanyById = async (req, res, next) => {
