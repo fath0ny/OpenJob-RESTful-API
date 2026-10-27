@@ -12,7 +12,7 @@ export const getProfile = async (req, res, next) => {
     return next(new NotFoundError('User tidak ditemukan'));
   }
 
-  return response(res, 200, 'Profile berhasil ditampilkan', { user });
+  return response(res, 200, 'Profile berhasil ditampilkan', user);
 };
 
 export const getMyApplications = async (req, res) => {
