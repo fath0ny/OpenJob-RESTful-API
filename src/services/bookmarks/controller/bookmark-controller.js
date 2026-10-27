@@ -12,7 +12,7 @@ export const createBookmark = async (req, res, next) => {
     return next(new InvariantError('Bookmark gagal ditambahkan'));
   }
 
-  return response(res, 201, 'Bookmark berhasil ditambahkan', { bookmarkId: bookmark.id });
+  return response(res, 201, 'Bookmark berhasil ditambahkan', { id: bookmark.id });
 };
 
 export const getBookmarkById = async (req, res, next) => {
@@ -23,7 +23,7 @@ export const getBookmarkById = async (req, res, next) => {
     return next(new NotFoundError('Bookmark tidak ditemukan'));
   }
 
-  return response(res, 200, 'Bookmark berhasil ditampilkan', { bookmark });
+  return response(res, 200, 'Bookmark berhasil ditampilkan', bookmark);
 };
 
 export const getMyBookmarks = async (req, res) => {
