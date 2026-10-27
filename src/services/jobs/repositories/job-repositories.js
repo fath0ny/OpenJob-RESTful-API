@@ -6,14 +6,25 @@ class JobRepositories {
     this.pool = new Pool();
   }
 
-  async createJob({ title, description, companyId, categoryId }) {
+  async createJob({
+    title, description, companyId, categoryId, jobType, experienceLevel,
+    locationType, locationCity, salaryMin, salaryMax, isSalaryVisible, status,
+  }) {
     const id = nanoid(16);
     const createdAt = new Date().toISOString();
     const updatedAt = createdAt;
 
     const query = {
-      text: 'INSERT INTO jobs(id, title, description, company_id, category_id, created_at, updated_at) VALUES($1, $2, $3, $4, $5, $6, $7) RETURNING id',
-      values: [id, title, description, companyId, categoryId, createdAt, updatedAt],
+      text: `INSERT INTO jobs(
+        id, title, description, company_id, category_id, job_type, experience_level,
+        location_type, location_city, salary_min, salary_max, is_salary_visible,
+        status, created_at, updated_at
+      ) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15) RETURNING id`,
+      values: [
+        id, title, description, companyId, categoryId, jobType, experienceLevel,
+        locationType, locationCity, salaryMin, salaryMax, isSalaryVisible,
+        status, createdAt, updatedAt,
+      ],
     };
 
     const result = await this.pool.query(query);
@@ -44,49 +55,46 @@ class JobRepositories {
   }
 
   async getJobById(id) {
-    const query = {
-      text: 'SELECT * FROM jobs WHERE id = $1',
-      values: [id],
-    };
+    const query = { text: 'SELECT * FROM jobs WHERE id = $1', values: [id] };
     const result = await this.pool.query(query);
     return result.rows[0];
   }
 
   async getJobsByCompanyId(companyId) {
-    const query = {
-      text: 'SELECT * FROM jobs WHERE company_id = $1',
-      values: [companyId],
-    };
+    const query = { text: 'SELECT * FROM jobs WHERE company_id = $1', values: [companyId] };
     const result = await this.pool.query(query);
     return result.rows;
   }
 
   async getJobsByCategoryId(categoryId) {
-    const query = {
-      text: 'SELECT * FROM jobs WHERE category_id = $1',
-      values: [categoryId],
-    };
+    const query = { text: 'SELECT * FROM jobs WHERE category_id = $1', values: [categoryId] };
     const result = await this.pool.query(query);
     return result.rows;
   }
 
   async editJob({
-    id, title, description, companyId, categoryId,
+    id, title, description, companyId, categoryId, jobType, experienceLevel,
+    locationType, locationCity, salaryMin, salaryMax, isSalaryVisible, status,
   }) {
     const updatedAt = new Date().toISOString();
     const query = {
-      text: 'UPDATE jobs SET title = $1, description = $2, company_id = $3, category_id = $4, updated_at = $5 WHERE id = $6 RETURNING id',
-      values: [title, description, companyId, categoryId, updatedAt, id],
+      text: `UPDATE jobs SET
+        title = $1, description = $2, company_id = $3, category_id = $4, job_type = $5,
+        experience_level = $6, location_type = $7, location_city = $8, salary_min = $9,
+        salary_max = $10, is_salary_visible = $11, status = $12, updated_at = $13
+        WHERE id = $14 RETURNING id`,
+      values: [
+        title, description, companyId, categoryId, jobType, experienceLevel,
+        locationType, locationCity, salaryMin, salaryMax, isSalaryVisible,
+        status, updatedAt, id,
+      ],
     };
     const result = await this.pool.query(query);
     return result.rows[0];
   }
 
   async deleteJob(id) {
-    const query = {
-      text: 'DELETE FROM jobs WHERE id = $1 RETURNING id',
-      values: [id],
-    };
+    const query = { text: 'DELETE FROM jobs WHERE id = $1 RETURNING id', values: [id] };
     const result = await this.pool.query(query);
     return result.rows[0];
   }
