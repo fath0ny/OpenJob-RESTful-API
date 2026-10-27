@@ -11,7 +11,7 @@ export const createCategory = async (req, res, next) => {
     return next(new InvariantError('Category gagal ditambahkan'));
   }
 
-  return response(res, 201, 'Category berhasil ditambahkan', { categoryId: category.id });
+  return response(res, 201, 'Category berhasil ditambahkan', { id: category.id });
 };
 
 export const getCategories = async (req, res) => {
@@ -27,7 +27,7 @@ export const getCategoryById = async (req, res, next) => {
     return next(new NotFoundError('Category tidak ditemukan'));
   }
 
-  return response(res, 200, 'Category berhasil ditampilkan', { category });
+  return response(res, 200, 'Category berhasil ditampilkan', category);
 };
 
 export const editCategoryById = async (req, res, next) => {
