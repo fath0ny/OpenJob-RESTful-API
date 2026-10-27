@@ -4,7 +4,7 @@ import InvariantError from '../../../exceptions/invariant-error.js';
 import NotFoundError from '../../../exceptions/not-found-error.js';
 
 export const createApplication = async (req, res, next) => {
-  const { jobId } = req.validated;
+  const { job_id: jobId } = req.validated;
   const { id: userId } = req.user;
 
   const application = await ApplicationRepositories.createApplication({ jobId, userId });
@@ -12,7 +12,7 @@ export const createApplication = async (req, res, next) => {
     return next(new InvariantError('Lamaran gagal ditambahkan'));
   }
 
-  return response(res, 201, 'Lamaran berhasil ditambahkan', { applicationId: application.id });
+  return response(res, 201, 'Lamaran berhasil ditambahkan', { id: application.id });
 };
 
 export const getApplications = async (req, res) => {
@@ -28,7 +28,7 @@ export const getApplicationById = async (req, res, next) => {
     return next(new NotFoundError('Application tidak ditemukan'));
   }
 
-  return response(res, 200, 'Application berhasil ditampilkan', { application });
+  return response(res, 200, 'Application berhasil ditampilkan', application);
 };
 
 export const getApplicationsByUserId = async (req, res) => {

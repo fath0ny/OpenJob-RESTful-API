@@ -1,7 +1,10 @@
+/* eslint-disable camelcase */
 import Joi from 'joi';
 
 export const applicationPayloadSchema = Joi.object({
-  jobId: Joi.string().required(),
+  job_id: Joi.string().required(),
+  user_id: Joi.string(),
+  status: Joi.string().valid('pending', 'reviewed', 'accepted', 'rejected'),
 });
 
 export const applicationStatusPayloadSchema = Joi.object({
