@@ -1,4 +1,5 @@
 import ApplicationRepositories from '../repositories/application-repositories.js';
+import ApplicationQueueService from '../producers/application-queue-service.js';
 import response from '../../../utils/response.js';
 import InvariantError from '../../../exceptions/invariant-error.js';
 import NotFoundError from '../../../exceptions/not-found-error.js';
@@ -12,7 +13,10 @@ export const createApplication = async (req, res, next) => {
     return next(new InvariantError('Lamaran gagal ditambahkan'));
   }
 
-  return response(res, 201, 'Lamaran berhasil ditambahkan', { id: application.id });
+  ApplicationQueueService.publishNewApplication(application.id)
+    .catch((error) => console.error('Gagal publish ke RabbitMQ:', error.message));
+
+  return response(res, 201, 'Lamaran berhasil ditambahkan', application);
 };
 
 export const getApplications = async (req, res) => {

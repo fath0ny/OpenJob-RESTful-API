@@ -1,6 +1,8 @@
 import { Pool } from 'pg';
 import { nanoid } from 'nanoid';
 import CacheService from '../../../cache/redis-service.js';
+import InvariantError from '../../../exceptions/invariant-error.js';
+import NotFoundError from '../../../exceptions/not-found-error.js';
 
 class ApplicationRepositories {
   constructor() {
@@ -14,19 +16,27 @@ class ApplicationRepositories {
     const updatedAt = createdAt;
 
     const query = {
-      text: 'INSERT INTO applications(id, job_id, user_id, status, created_at, updated_at) VALUES($1, $2, $3, $4, $5, $6) RETURNING id',
+      text: 'INSERT INTO applications(id, job_id, user_id, status, created_at, updated_at) VALUES($1, $2, $3, $4, $5, $6) RETURNING *',
       values: [id, jobId, userId, 'pending', createdAt, updatedAt],
     };
 
-    const result = await this.pool.query(query);
-    const application = result.rows[0];
+    try {
+      const result = await this.pool.query(query);
+      const application = result.rows[0];
 
-    if (application) {
       await this.cacheService.delete(`applications:user:${userId}`);
       await this.cacheService.delete(`applications:job:${jobId}`);
-    }
 
-    return application;
+      return application;
+    } catch (error) {
+      if (error.code === '23505') {
+        throw new InvariantError('Anda sudah pernah melamar untuk pekerjaan ini');
+      }
+      if (error.code === '23503') {
+        throw new NotFoundError('Job tidak ditemukan');
+      }
+      throw error;
+    }
   }
 
   async getApplications() {
