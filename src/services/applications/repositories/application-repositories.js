@@ -70,6 +70,16 @@ class ApplicationRepositories {
     const result = await this.pool.query(query);
     return result.rows[0];
   }
+
+  async saveDocument({ id, documentName, documentPath }) {
+    const updatedAt = new Date().toISOString();
+    const query = {
+      text: 'UPDATE applications SET document_name = $1, document_path = $2, updated_at = $3 WHERE id = $4 RETURNING id',
+      values: [documentName, documentPath, updatedAt, id],
+    };
+    const result = await this.pool.query(query);
+    return result.rows[0];
+  }
 }
 
 export default new ApplicationRepositories();
