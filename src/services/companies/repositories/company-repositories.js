@@ -1,9 +1,11 @@
 import { Pool } from 'pg';
 import { nanoid } from 'nanoid';
+import CacheService from '../../../cache/redis-service.js';
 
 class CompanyRepositories {
   constructor() {
     this.pool = new Pool();
+    this.cacheService = new CacheService();
   }
 
   async createCompany({ name, description, location, owner }) {
@@ -17,7 +19,13 @@ class CompanyRepositories {
     };
 
     const result = await this.pool.query(query);
-    return result.rows[0];
+    const company = result.rows[0];
+
+    if (company) {
+      await this.cacheService.delete(`companies:${company.id}`);
+    }
+
+    return company;
   }
 
   async getCompanies() {
@@ -26,12 +34,22 @@ class CompanyRepositories {
   }
 
   async getCompanyById(id) {
-    const query = {
-      text: 'SELECT * FROM companies WHERE id = $1',
-      values: [id],
-    };
-    const result = await this.pool.query(query);
-    return result.rows[0];
+    const cacheKey = `companies:${id}`;
+
+    try {
+      const cached = await this.cacheService.get(cacheKey);
+      return { data: JSON.parse(cached), source: 'cache' };
+    } catch (error) {
+      const query = { text: 'SELECT * FROM companies WHERE id = $1', values: [id] };
+      const result = await this.pool.query(query);
+      const company = result.rows[0];
+
+      if (company) {
+        await this.cacheService.set(cacheKey, JSON.stringify(company));
+      }
+
+      return { data: company, source: 'database' };
+    }
   }
 
   async editCompany({ id, name, description, location }) {
@@ -41,7 +59,13 @@ class CompanyRepositories {
       values: [name, description, location, updatedAt, id],
     };
     const result = await this.pool.query(query);
-    return result.rows[0];
+    const company = result.rows[0];
+
+    if (company) {
+      await this.cacheService.delete(`companies:${id}`);
+    }
+
+    return company;
   }
 
   async deleteCompany(id) {
@@ -50,7 +74,13 @@ class CompanyRepositories {
       values: [id],
     };
     const result = await this.pool.query(query);
-    return result.rows[0];
+    const deleted = result.rows[0];
+
+    if (deleted) {
+      await this.cacheService.delete(`companies:${id}`);
+    }
+
+    return deleted;
   }
 }
 

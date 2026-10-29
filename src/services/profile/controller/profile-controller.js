@@ -6,7 +6,7 @@ import NotFoundError from '../../../exceptions/not-found-error.js';
 
 export const getProfile = async (req, res, next) => {
   const { id } = req.user;
-  const user = await UserRepositories.getUserById(id);
+  const { data: user } = await UserRepositories.getUserById(id);
 
   if (!user) {
     return next(new NotFoundError('User tidak ditemukan'));

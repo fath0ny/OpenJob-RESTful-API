@@ -1,9 +1,11 @@
 import { Pool } from 'pg';
 import { nanoid } from 'nanoid';
+import CacheService from '../../../cache/redis-service.js';
 
 class BookmarkRepositories {
   constructor() {
     this.pool = new Pool();
+    this.cacheService = new CacheService();
   }
 
   async createBookmark({ jobId, userId }) {
@@ -16,7 +18,13 @@ class BookmarkRepositories {
     };
 
     const result = await this.pool.query(query);
-    return result.rows[0];
+    const bookmark = result.rows[0];
+
+    if (bookmark) {
+      await this.cacheService.delete(`bookmarks:${userId}`);
+    }
+
+    return bookmark;
   }
 
   async getBookmarkById(jobId, id) {
@@ -29,12 +37,19 @@ class BookmarkRepositories {
   }
 
   async getBookmarksByUser(userId) {
-    const query = {
-      text: 'SELECT * FROM bookmarks WHERE user_id = $1',
-      values: [userId],
-    };
-    const result = await this.pool.query(query);
-    return result.rows;
+    const cacheKey = `bookmarks:${userId}`;
+
+    try {
+      const cached = await this.cacheService.get(cacheKey);
+      return { data: JSON.parse(cached), source: 'cache' };
+    } catch (error) {
+      const query = { text: 'SELECT * FROM bookmarks WHERE user_id = $1', values: [userId] };
+      const result = await this.pool.query(query);
+
+      await this.cacheService.set(cacheKey, JSON.stringify(result.rows));
+
+      return { data: result.rows, source: 'database' };
+    }
   }
 
   async deleteBookmarkByUserAndJob(jobId, userId) {
@@ -43,7 +58,13 @@ class BookmarkRepositories {
       values: [jobId, userId],
     };
     const result = await this.pool.query(query);
-    return result.rows[0];
+    const deleted = result.rows[0];
+
+    if (deleted) {
+      await this.cacheService.delete(`bookmarks:${userId}`);
+    }
+
+    return deleted;
   }
 }
 

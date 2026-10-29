@@ -22,12 +22,13 @@ export const getCompanies = async (req, res) => {
 
 export const getCompanyById = async (req, res, next) => {
   const { id } = req.params;
-  const company = await CompanyRepositories.getCompanyById(id);
+  const { data: company, source } = await CompanyRepositories.getCompanyById(id);
 
   if (!company) {
     return next(new NotFoundError('Company tidak ditemukan'));
   }
 
+  res.set('X-Data-Source', source);
   return response(res, 200, 'Company berhasil ditampilkan', company);
 };
 

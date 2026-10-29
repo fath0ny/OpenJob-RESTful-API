@@ -1,9 +1,11 @@
 import { Pool } from 'pg';
 import { nanoid } from 'nanoid';
+import CacheService from '../../../cache/redis-service.js';
 
 class ApplicationRepositories {
   constructor() {
     this.pool = new Pool();
+    this.cacheService = new CacheService();
   }
 
   async createApplication({ jobId, userId }) {
@@ -17,7 +19,14 @@ class ApplicationRepositories {
     };
 
     const result = await this.pool.query(query);
-    return result.rows[0];
+    const application = result.rows[0];
+
+    if (application) {
+      await this.cacheService.delete(`applications:user:${userId}`);
+      await this.cacheService.delete(`applications:job:${jobId}`);
+    }
+
+    return application;
   }
 
   async getApplications() {
@@ -26,59 +35,89 @@ class ApplicationRepositories {
   }
 
   async getApplicationById(id) {
-    const query = {
-      text: 'SELECT * FROM applications WHERE id = $1',
-      values: [id],
-    };
-    const result = await this.pool.query(query);
-    return result.rows[0];
+    const cacheKey = `applications:${id}`;
+
+    try {
+      const cached = await this.cacheService.get(cacheKey);
+      return { data: JSON.parse(cached), source: 'cache' };
+    } catch (error) {
+      const query = { text: 'SELECT * FROM applications WHERE id = $1', values: [id] };
+      const result = await this.pool.query(query);
+      const application = result.rows[0];
+
+      if (application) {
+        await this.cacheService.set(cacheKey, JSON.stringify(application));
+      }
+
+      return { data: application, source: 'database' };
+    }
   }
 
   async getApplicationsByUserId(userId) {
-    const query = {
-      text: 'SELECT * FROM applications WHERE user_id = $1',
-      values: [userId],
-    };
-    const result = await this.pool.query(query);
-    return result.rows;
+    const cacheKey = `applications:user:${userId}`;
+
+    try {
+      const cached = await this.cacheService.get(cacheKey);
+      return { data: JSON.parse(cached), source: 'cache' };
+    } catch (error) {
+      const query = { text: 'SELECT * FROM applications WHERE user_id = $1', values: [userId] };
+      const result = await this.pool.query(query);
+
+      await this.cacheService.set(cacheKey, JSON.stringify(result.rows));
+
+      return { data: result.rows, source: 'database' };
+    }
   }
 
   async getApplicationsByJobId(jobId) {
-    const query = {
-      text: 'SELECT * FROM applications WHERE job_id = $1',
-      values: [jobId],
-    };
-    const result = await this.pool.query(query);
-    return result.rows;
+    const cacheKey = `applications:job:${jobId}`;
+
+    try {
+      const cached = await this.cacheService.get(cacheKey);
+      return { data: JSON.parse(cached), source: 'cache' };
+    } catch (error) {
+      const query = { text: 'SELECT * FROM applications WHERE job_id = $1', values: [jobId] };
+      const result = await this.pool.query(query);
+
+      await this.cacheService.set(cacheKey, JSON.stringify(result.rows));
+
+      return { data: result.rows, source: 'database' };
+    }
   }
 
   async editApplicationStatus({ id, status }) {
     const updatedAt = new Date().toISOString();
     const query = {
-      text: 'UPDATE applications SET status = $1, updated_at = $2 WHERE id = $3 RETURNING id',
+      text: 'UPDATE applications SET status = $1, updated_at = $2 WHERE id = $3 RETURNING *',
       values: [status, updatedAt, id],
     };
     const result = await this.pool.query(query);
-    return result.rows[0];
+    const application = result.rows[0];
+
+    if (application) {
+      await this.cacheService.delete(`applications:${application.id}`);
+      await this.cacheService.delete(`applications:user:${application.user_id}`);
+      await this.cacheService.delete(`applications:job:${application.job_id}`);
+    }
+
+    return application;
   }
 
   async deleteApplication(id) {
     const query = {
-      text: 'DELETE FROM applications WHERE id = $1 RETURNING id',
+      text: 'DELETE FROM applications WHERE id = $1 RETURNING *',
       values: [id],
     };
     const result = await this.pool.query(query);
-    return result.rows[0];
-  }
+    const deleted = result.rows[0];
 
-  async saveDocument({ id, documentName, documentPath }) {
-    const updatedAt = new Date().toISOString();
-    const query = {
-      text: 'UPDATE applications SET document_name = $1, document_path = $2, updated_at = $3 WHERE id = $4 RETURNING id',
-      values: [documentName, documentPath, updatedAt, id],
-    };
-    const result = await this.pool.query(query);
-    return result.rows[0];
+    if (deleted) {
+      await this.cacheService.delete(`applications:${deleted.id}`);
+      await this.cacheService.delete(`applications:user:${deleted.user_id}`);
+      await this.cacheService.delete(`applications:job:${deleted.job_id}`);
+    }
+
+    return deleted;
   }
 }
 

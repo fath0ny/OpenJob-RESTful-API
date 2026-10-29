@@ -31,7 +31,8 @@
     "multer": "^2.5.0",
     "nanoid": "^6.0.2",
     "node-pg-migrate": "^9.0.0",
-    "pg": "^8.23.1"
+    "pg": "^8.23.1",
+    "redis": "^6.3.0"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

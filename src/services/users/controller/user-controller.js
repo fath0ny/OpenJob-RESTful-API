@@ -22,11 +22,24 @@ export const createUser = async (req, res, next) => {
 
 export const getUserById = async (req, res, next) => {
   const { id } = req.params;
-  const user = await UserRepositories.getUserById(id);
+  const { data: user, source } = await UserRepositories.getUserById(id);
 
   if (!user) {
     return next(new NotFoundError('User tidak ditemukan'));
   }
 
+  res.set('X-Data-Source', source);
   return response(res, 200, 'User berhasil ditampilkan', user);
+};
+
+export const editUserById = async (req, res, next) => {
+  const { id } = req.params;
+  const { name, email, role } = req.validated;
+
+  const user = await UserRepositories.editUser({ id, name, email, role });
+  if (!user) {
+    return next(new NotFoundError('User tidak ditemukan'));
+  }
+
+  return response(res, 200, 'User berhasil diperbarui', user);
 };

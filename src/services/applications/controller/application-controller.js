@@ -22,24 +22,29 @@ export const getApplications = async (req, res) => {
 
 export const getApplicationById = async (req, res, next) => {
   const { id } = req.params;
-  const application = await ApplicationRepositories.getApplicationById(id);
+  const { data: application, source } = await ApplicationRepositories.getApplicationById(id);
 
   if (!application) {
     return next(new NotFoundError('Application tidak ditemukan'));
   }
 
+  res.set('X-Data-Source', source);
   return response(res, 200, 'Application berhasil ditampilkan', application);
 };
 
 export const getApplicationsByUserId = async (req, res) => {
   const { userId } = req.params;
-  const applications = await ApplicationRepositories.getApplicationsByUserId(userId);
+  const { data: applications, source } = await ApplicationRepositories.getApplicationsByUserId(userId);
+
+  res.set('X-Data-Source', source);
   return response(res, 200, 'Applications berhasil ditampilkan', { applications });
 };
 
 export const getApplicationsByJobId = async (req, res) => {
   const { jobId } = req.params;
-  const applications = await ApplicationRepositories.getApplicationsByJobId(jobId);
+  const { data: applications, source } = await ApplicationRepositories.getApplicationsByJobId(jobId);
+
+  res.set('X-Data-Source', source);
   return response(res, 200, 'Applications berhasil ditampilkan', { applications });
 };
 
@@ -52,7 +57,7 @@ export const editApplicationStatus = async (req, res, next) => {
     return next(new NotFoundError('Application tidak ditemukan'));
   }
 
-  return response(res, 200, 'Status lamaran berhasil diperbarui', { application });
+  return response(res, 200, 'Status lamaran berhasil diperbarui', application);
 };
 
 export const deleteApplicationById = async (req, res, next) => {

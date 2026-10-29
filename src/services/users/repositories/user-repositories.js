@@ -1,10 +1,12 @@
 import { Pool } from 'pg';
 import { nanoid } from 'nanoid';
 import bcrypt from 'bcrypt';
+import CacheService from '../../../cache/redis-service.js';
 
 class UserRepositories {
   constructor() {
     this.pool = new Pool();
+    this.cacheService = new CacheService();
   }
 
   async createUser({ name, email, password, role }) {
@@ -32,12 +34,41 @@ class UserRepositories {
   }
 
   async getUserById(id) {
+    const cacheKey = `users:${id}`;
+
+    try {
+      const cached = await this.cacheService.get(cacheKey);
+      return { data: JSON.parse(cached), source: 'cache' };
+    } catch (error) {
+      const query = {
+        text: 'SELECT id, name, email, role, created_at, updated_at FROM users WHERE id = $1',
+        values: [id],
+      };
+      const result = await this.pool.query(query);
+      const user = result.rows[0];
+
+      if (user) {
+        await this.cacheService.set(cacheKey, JSON.stringify(user));
+      }
+
+      return { data: user, source: 'database' };
+    }
+  }
+
+  async editUser({ id, name, email, role }) {
+    const updatedAt = new Date().toISOString();
     const query = {
-      text: 'SELECT id, name, email, role, created_at, updated_at FROM users WHERE id = $1',
-      values: [id],
+      text: 'UPDATE users SET name = $1, email = $2, role = $3, updated_at = $4 WHERE id = $5 RETURNING id',
+      values: [name, email, role, updatedAt, id],
     };
     const result = await this.pool.query(query);
-    return result.rows[0];
+    const user = result.rows[0];
+
+    if (user) {
+      await this.cacheService.delete(`users:${id}`);
+    }
+
+    return user;
   }
 
   async verifyUserCredential(email, password) {

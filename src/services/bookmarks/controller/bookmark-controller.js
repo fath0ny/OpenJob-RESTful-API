@@ -28,7 +28,9 @@ export const getBookmarkById = async (req, res, next) => {
 
 export const getMyBookmarks = async (req, res) => {
   const { id: userId } = req.user;
-  const bookmarks = await BookmarkRepositories.getBookmarksByUser(userId);
+  const { data: bookmarks, source } = await BookmarkRepositories.getBookmarksByUser(userId);
+
+  res.set('X-Data-Source', source);
   return response(res, 200, 'Bookmarks berhasil ditampilkan', { bookmarks });
 };
 
