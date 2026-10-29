@@ -17,12 +17,12 @@ export const getProfile = async (req, res, next) => {
 
 export const getMyApplications = async (req, res) => {
   const { id: userId } = req.user;
-  const applications = await ApplicationRepositories.getApplicationsByUserId(userId);
+  const { data: applications } = await ApplicationRepositories.getApplicationsByUserId(userId);
   return response(res, 200, 'Applications berhasil ditampilkan', { applications });
 };
 
 export const getMyBookmarks = async (req, res) => {
   const { id: userId } = req.user;
-  const bookmarks = await BookmarkRepositories.getBookmarksByUser(userId);
+  const { data: bookmarks } = await BookmarkRepositories.getBookmarksByUser(userId);
   return response(res, 200, 'Bookmarks berhasil ditampilkan', { bookmarks });
 };

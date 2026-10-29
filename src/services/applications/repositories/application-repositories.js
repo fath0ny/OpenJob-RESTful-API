@@ -40,7 +40,27 @@ class ApplicationRepositories {
   }
 
   async getApplications() {
-    const result = await this.pool.query('SELECT * FROM applications');
+    const result = await this.pool.query(`                                                                                                                                                                                           
+       SELECT                                                                                                                                                                                                                         
+         applications.id,                                                                                                                                                                                                             
+         applications.job_id,                                                                                                                                                                                                         
+         applications.user_id,                                                                                                                                                                                                        
+         applications.status,                                                                                                                                                                                                         
+         applications.document_name,                                                                                                                                                                                                  
+         applications.created_at,                                                                                                                                                                                                     
+         applications.updated_at,                                                                                                                                                                                                     
+         users.name AS user_name,                                                                                                                                                                                                     
+         jobs.title AS job_title,                                                                                                                                                                                                     
+         jobs.location_city AS job_location,                                                                                                                                                                                          
+         jobs.job_type AS job_type,                                                                                                                                                                                                   
+         companies.name AS company_name,                                                                                                                                                                                              
+         jobs.company_id AS company_id                                                                                                                                                                                                
+       FROM applications                                                                                                                                                                                                              
+       LEFT JOIN users ON users.id = applications.user_id                                                                                                                                                                             
+       LEFT JOIN jobs ON jobs.id = applications.job_id                                                                                                                                                                                
+       LEFT JOIN companies ON companies.id = jobs.company_id                                                                                                                                                                          
+       ORDER BY applications.created_at DESC                                                                                                                                                                                          
+     `);
     return result.rows;
   }
 
@@ -70,7 +90,33 @@ class ApplicationRepositories {
       const cached = await this.cacheService.get(cacheKey);
       return { data: JSON.parse(cached), source: 'cache' };
     } catch (error) {
-      const query = { text: 'SELECT * FROM applications WHERE user_id = $1', values: [userId] };
+      const query = {
+        text: `                                                                                                                                                                                                                        
+         SELECT                                                                                                                                                                                                                       
+           applications.id,                                                                                                                                                                                                           
+           applications.job_id,                                                                                                                                                                                                       
+           applications.user_id,                                                                                                                                                                                                      
+           applications.status,                                                                                                                                                                                                       
+           applications.document_name,                                                                                                                                                                                                
+           applications.created_at,                                                                                                                                                                                                   
+           applications.updated_at,                                                                                                                                                                                                   
+           users.name AS user_name,                                                                                                                                                                                                   
+           jobs.title AS job_title,                                                                                                                                                                                                   
+           jobs.location_city AS job_location,                                                                                                                                                                                        
+           jobs.job_type AS job_type,                                                                                                                                                                                                 
+           jobs.salary_min,                                                                                                                                                                                                           
+           jobs.salary_max,                                                                                                                                                                                                           
+           companies.name AS company_name,                                                                                                                                                                                            
+           jobs.company_id AS company_id                                                                                                                                                                                              
+         FROM applications                                                                                                                                                                                                            
+         LEFT JOIN users ON users.id = applications.user_id                                                                                                                                                                           
+         LEFT JOIN jobs ON jobs.id = applications.job_id                                                                                                                                                                              
+         LEFT JOIN companies ON companies.id = jobs.company_id                                                                                                                                                                        
+         WHERE applications.user_id = $1                                                                                                                                                                                              
+         ORDER BY applications.created_at DESC                                                                                                                                                                                        
+       `,
+        values: [userId],
+      };
       const result = await this.pool.query(query);
 
       await this.cacheService.set(cacheKey, JSON.stringify(result.rows));

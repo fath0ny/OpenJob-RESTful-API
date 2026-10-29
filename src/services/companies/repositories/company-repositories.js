@@ -29,7 +29,11 @@ class CompanyRepositories {
   }
 
   async getCompanies() {
-    const result = await this.pool.query('SELECT * FROM companies');
+    const result = await this.pool.query(
+      `SELECT id, name, description, location, owner, created_at                                                                                                                                                                     
+        FROM companies                                                                                                                                                                                                                
+        ORDER BY created_at DESC`
+    );
     return result.rows;
   }
 

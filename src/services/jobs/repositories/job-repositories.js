@@ -32,11 +32,24 @@ class JobRepositories {
   }
 
   async getJobs({ title, companyName } = {}) {
-    let text = `
-      SELECT jobs.*, companies.name AS company_name
-      FROM jobs
-      LEFT JOIN companies ON companies.id = jobs.company_id
-      WHERE 1=1
+    let text = `                                                                                                                                                                                                      
+      SELECT                                                                                                                                                                                                                       
+        jobs.id,                                                                                                                                                                                                                   
+        jobs.company_id,                                                                                                                                                                                                           
+        jobs.category_id,                                                                                                                                                                                                          
+        jobs.title,                                                                                                                                                                                                                
+        jobs.description,                                                                                                                                                                                                          
+        jobs.location_city AS location,                                                                                                                                                                                            
+        jobs.salary_min,                                                                                                                                                                                                           
+        jobs.salary_max,                                                                                                                                                                                                           
+        jobs.job_type,                                                                                                                                                                                                             
+        jobs.created_at,                                                                                                                                                                                                           
+        jobs.updated_at,                                                                                                                                                                                                           
+        companies.name AS company_name,                                                                                                                                                                                            
+        companies.location AS company_location                                                                                                                                                                                     
+      FROM jobs                                                                                                                                                                                                                    
+      LEFT JOIN companies ON companies.id = jobs.company_id                                                                                                                                                                        
+      WHERE 1=1                                                                                                                                                                                                                    
     `;
     const values = [];
 
@@ -49,6 +62,8 @@ class JobRepositories {
       values.push(`%${companyName}%`);
       text += ` AND companies.name ILIKE $${values.length}`;
     }
+
+    text += ' ORDER BY jobs.created_at DESC';
 
     const result = await this.pool.query({ text, values });
     return result.rows;

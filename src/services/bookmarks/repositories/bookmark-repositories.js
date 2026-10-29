@@ -43,7 +43,32 @@ class BookmarkRepositories {
       const cached = await this.cacheService.get(cacheKey);
       return { data: JSON.parse(cached), source: 'cache' };
     } catch (error) {
-      const query = { text: 'SELECT * FROM bookmarks WHERE user_id = $1', values: [userId] };
+      const query = {
+        text: `                                                                                                                                                                                                                        
+         SELECT                                                                                                                                                                                                                       
+           bookmarks.*,                                                                                                                                                                                                               
+           jobs.company_id,                                                                                                                                                                                                           
+           jobs.category_id,                                                                                                                                                                                                          
+           jobs.title AS job_title,                                                                                                                                                                                                   
+           jobs.description AS job_description,                                                                                                                                                                                       
+           jobs.location_city AS job_location,                                                                                                                                                                                        
+           jobs.salary_min,                                                                                                                                                                                                           
+           jobs.salary_max,                                                                                                                                                                                                           
+           jobs.job_type,                                                                                                                                                                                                             
+           jobs.created_at AS job_created_at,                                                                                                                                                                                         
+           jobs.updated_at AS job_updated_at,                                                                                                                                                                                         
+           companies.name AS company_name,                                                                                                                                                                                            
+           companies.description AS company_description,                                                                                                                                                                              
+           companies.location AS company_location,                                                                                                                                                                                    
+           companies.created_at AS company_created_at                                                                                                                                                                                 
+         FROM bookmarks                                                                                                                                                                                                               
+         LEFT JOIN jobs ON jobs.id = bookmarks.job_id                                                                                                                                                                                 
+         LEFT JOIN companies ON companies.id = jobs.company_id                                                                                                                                                                        
+         WHERE bookmarks.user_id = $1                                                                                                                                                                                                 
+         ORDER BY bookmarks.created_at DESC                                                                                                                                                                                           
+       `,
+        values: [userId],
+      };
       const result = await this.pool.query(query);
 
       await this.cacheService.set(cacheKey, JSON.stringify(result.rows));
