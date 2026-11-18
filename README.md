@@ -20,7 +20,6 @@ The project demonstrates a production-style backend setup: JWT authentication wi
 - [Message Broker](#message-broker)
 - [Database Schema](#database-schema)
 - [Available Scripts](#available-scripts)
-- [Possible Improvements](#possible-improvements)
 - [License](#license)
 
 ---
